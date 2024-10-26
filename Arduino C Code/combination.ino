@@ -1,24 +1,18 @@
-// This combines the part to operate the motor and the emg
-
 #include <Servo.h>
 
-#define SAMPLE_RATE 500        // Sampling rate
+#define SAMPLE_RATE 100        // Sampling rate 
 #define BAUD_RATE 115200       // Serial baud rate
 #define INPUT_PIN A0           // Signal input pin
 #define DETECT_PIN 2           // Detection input pin
 #define Vref (1.65 / 5 * 1024) // Reference voltage
-
-// Buffer for data processing
-#define BUFFER_SIZE 128           // Buffer size
-int circular_buffer[BUFFER_SIZE]; // Circular buffer
-int data_index, sum;
+#define THRESHOLD 340          // Set an appropriate threshold for activation
 
 Servo esc;  // Create a Servo object to control the ESC
 
 void setup() {
-  Serial.begin(BAUD_RATE);          // Initialize serial communication with the specified baud rate
-  pinMode(DETECT_PIN, INPUT);       // Set detect pin as input
-  esc.attach(9);                    // Attach the ESC signal wire to pin 9
+  Serial.begin(BAUD_RATE);      // Initialize serial communication with the specified baud rate
+  pinMode(DETECT_PIN, INPUT);   // Set detect pin as input
+  esc.attach(9);                // Attach the ESC signal wire to pin 9
 }
 
 void loop() {
@@ -38,23 +32,23 @@ void loop() {
     int signal = Filter(sensor_value);           // Apply filtering to the sensor value
     int emgRaw = signal - Vref;                  // Subtract reference voltage to get EMG raw value
 
-    if (detect_value == HIGH) {  // If detection signal is HIGH
+    // Check if the absolute EMG value exceeds the threshold for activation
+  // if (detect_value == HIGH && (abs(emgRaw) > THRESHOLD-100||abs(emgRaw)<THRESHOLD+100))
+    if(!(signal > -40 && signal < 40)) {
       Serial.println(String(emgRaw) + "," + String(signal) + ",1");  // Print EMG raw, filtered signal, and detection status
-      int motor_value = map(emgRaw, -512, 512, 0, 180);  // Map EMG value to motor control value (0-180)
-      motor_value = constrain(motor_value, 0, 180);      // Constrain the value to be within 0-180
-      esc.write(motor_value);                            // Set motor to the mapped value
-    } else {  // If detection signal is LOW
+      esc.write(110);  // Rotate motor clockwise at full speed
+      // delay(1000);
+    } else {  // If detection signal is LOW or below threshold
       Serial.println(String(emgRaw) + ",0,0");  // Print EMG raw value and detection status
-      esc.write(90);  // Set motor to stop position when not detected
+      esc.write(89);  // Set motor to stop position
     }
+    // delay(1000);
   }
 }
 
 /**************************** Filtering ************************************/
 
-// >>> Butterworth IIR Digital Filter: bandpass
-//  Sampling Rate: 500.0 Hz, Frequency: [70.0, 110.0] Hz
-//  Order: 4.0, implemented as second-order sections (biquads)
+// Simplified Butterworth IIR Digital Filter: bandpass
 float Filter(float input) {
   float output = input;
   {
