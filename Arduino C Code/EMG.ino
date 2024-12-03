@@ -26,6 +26,8 @@ void loop() {
 
   static bool ledoffFlag = 1;
 
+
+
   if (timer < 0) {
     timer += 1000000 / SAMPLE_RATE;
     int sensor_value = analogRead(INPUT_PIN);
@@ -39,6 +41,16 @@ void loop() {
     } else {
       Serial.println(String(emgRaw) + ",0,0");
     }
+  }
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');  // Read until a newline character is received
+    input.trim();  // Remove any extraneous newline or space characters
+
+    x = input.toInt();  // Convert the input string to an integer
+    
+    // Print the received and interpreted value back to the serial port
+    Serial.println(x);
+    esc.write(x);
   }
 }
 
