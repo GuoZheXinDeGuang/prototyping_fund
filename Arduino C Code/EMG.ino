@@ -42,16 +42,6 @@ void loop() {
       Serial.println(String(emgRaw) + ",0,0");
     }
   }
-  if (Serial.available() > 0) {
-    String input = Serial.readStringUntil('\n');  // Read until a newline character is received
-    input.trim();  // Remove any extraneous newline or space characters
-
-    x = input.toInt();  // Convert the input string to an integer
-    
-    // Print the received and interpreted value back to the serial port
-    Serial.println(x);
-    esc.write(x);
-  }
 }
 
 /****************************滤波************************************/
